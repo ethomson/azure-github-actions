@@ -11,4 +11,4 @@ steps:
 - script: |
     env
     pwd
-    docker run --rm -v '$(Build.SourcesDirectory):/mnt' -t koalaman/shellcheck */entrypoint.sh
+    find . -type f -name \*\.sh -exec docker run --rm -v '$(Build.SourcesDirectory):/mnt' -t koalaman/shellcheck {} \;
