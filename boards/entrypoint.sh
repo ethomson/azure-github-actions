@@ -45,6 +45,10 @@ AZURE_BOARDS_DESCRIPTION=$(jq --raw-output .issue.body "$GITHUB_EVENT_PATH")
 
 TRIGGER="${GITHUB_EVENT}/${GITHUB_ACTION}"
 
+env
+echo "trigger: $TRIGGER"
+cat $GITHUB_EVENT_PATH
+
 case "$TRIGGER" in
 "issue/opened")
     echo "Creating work item..."
