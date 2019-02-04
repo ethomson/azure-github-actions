@@ -27,7 +27,7 @@ function work_items_for_issue {
 }
 
 AZURE_BOARDS_TYPE="${AZURE_BOARDS_TYPE:-Feature}"
-AZURE_BOARDS_CLOSED_STATE="${AZURE_BOARDS_CLOSED_STATE:-Done}"
+AZURE_BOARDS_CLOSED_STATE="${AZURE_BOARDS_CLOSED_STATE:-Closed}"
 AZURE_BOARDS_REOPENED_STATE="${AZURE_BOARDS_REOPENED_STATE:-New}"
 
 AZURE_DEVOPS_URL="https://dev.azure.com/${AZURE_BOARDS_ORGANIZATION}/"
@@ -40,6 +40,7 @@ GITHUB_EVENT=${GITHUB_EVENT:-$(jq --raw-output 'if .issue != null then "issue" e
 
 GITHUB_ACTION=$(jq --raw-output .action "$GITHUB_EVENT_PATH")
 GITHUB_ISSUE_NUMBER=$(jq --raw-output .issue.number "$GITHUB_EVENT_PATH")
+GITHUB_ISSUE_HTML_URL=$(jq --raw-output .issue.html_url "$GITHUB_EVENT_PATH")
 AZURE_BOARDS_TITLE=$(jq --raw-output .issue.title "$GITHUB_EVENT_PATH")
 AZURE_BOARDS_DESCRIPTION=$(jq --raw-output .issue.body "$GITHUB_EVENT_PATH")
 
@@ -48,10 +49,12 @@ TRIGGER="${GITHUB_EVENT}/${GITHUB_ACTION}"
 case "$TRIGGER" in
 "issue/opened")
     echo "Creating work item..."
+    HYPERLINK="Created from <a href='${GITHUB_ISSUE_HTML_URL}'>Issue #${GITHUB_ISSUE_NUMBER}</a>"
     RESULTS=$(vsts work item create --type "${AZURE_BOARDS_TYPE}" \
         --title "${AZURE_BOARDS_TITLE}" \
         --description "${AZURE_BOARDS_DESCRIPTION}" \
-        -f 80="GitHub; Issue ${GITHUB_ISSUE_NUMBER}" \
+        -f System.Tags="GitHub; Issue ${GITHUB_ISSUE_NUMBER}" \
+        --discussion "${HYPERLINK}" \
         --output json)
     AZURE_BOARDS_ID=$(echo "${RESULTS}" | jq --raw-output .id)
 
