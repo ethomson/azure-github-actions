@@ -71,7 +71,7 @@ TRIGGER="${GITHUB_EVENT}/${GITHUB_ACTION}"
 
 case "$TRIGGER" in
 "issue/opened")
-    if [ ! -z "$ITEM_LABEL"] && ! check_github_label; then
+    if [ ! -z "$ITEM_LABEL" ] && ! check_github_label; then
         echo "Issue ${GITHUB_ISSUE_NUMBER} does not have a label (${ITEM_LABEL}) set; ignoring."
         exit
     fi
