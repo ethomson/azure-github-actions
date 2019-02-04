@@ -26,6 +26,22 @@ function work_items_for_issue {
     vsts work item query --wiql "SELECT ID FROM workitems WHERE [System.Tags] CONTAINS 'GitHub' AND [System.Tags] CONTAINS 'Issue ${GITHUB_ISSUE_NUMBER}'" | jq '.[].id' | xargs
 }
 
+function check_github_label {
+    if [ -z "$ITEM_LABEL" ]; then
+        return 0
+    fi
+
+    for EXPECTED in $(sed 's/;/ /g' <<< "$ITEM_LABEL"); do
+        for SET in $(jq --raw-output '.issue.labels[].name' "$GITHUB_EVENT_PATH" | xargs); do
+            if [ "$EXPECTED" = "$SET" ]; then
+                return 0
+            fi
+        done
+    done
+
+    return 1
+}
+
 AZURE_BOARDS_TYPE="${AZURE_BOARDS_TYPE:-Feature}"
 AZURE_BOARDS_CLOSED_STATE="${AZURE_BOARDS_CLOSED_STATE:-Done}"
 AZURE_BOARDS_REOPENED_STATE="${AZURE_BOARDS_REOPENED_STATE:-New}"
@@ -47,6 +63,11 @@ TRIGGER="${GITHUB_EVENT}/${GITHUB_ACTION}"
 
 case "$TRIGGER" in
 "issue/opened")
+    if ! check_github_label; then
+        echo "Issue ${GITHUB_ISSUE_NUMBER} does not have a label (${ITEM_LABEL}) set; ignoring."
+        exit
+    fi
+
     echo "Creating work item..."
     RESULTS=$(vsts work item create --type "${AZURE_BOARDS_TYPE}" \
         --title "${AZURE_BOARDS_TITLE}" \
