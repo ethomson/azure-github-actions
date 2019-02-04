@@ -27,10 +27,6 @@ function work_items_for_issue {
 }
 
 function check_github_label {
-    if [ -z "$ITEM_LABEL" ]; then
-        return 0
-    fi
-
     for EXPECTED in $(sed 's/;/ /g' <<< "$ITEM_LABEL"); do
         for SET in $(jq --raw-output '.issue.labels[].name' "$GITHUB_EVENT_PATH" | xargs); do
             if [ "$EXPECTED" = "$SET" ]; then
@@ -40,6 +36,18 @@ function check_github_label {
     done
 
     return 1
+}
+
+function create_work_item {
+    echo "Creating work item..."
+    RESULTS=$(vsts work item create --type "${AZURE_BOARDS_TYPE}" \
+        --title "${AZURE_BOARDS_TITLE}" \
+        --description "${AZURE_BOARDS_DESCRIPTION}" \
+        -f 80="GitHub; Issue ${GITHUB_ISSUE_NUMBER}" \
+        --output json)
+    AZURE_BOARDS_ID=$(echo "${RESULTS}" | jq --raw-output .id)
+
+    echo "Created work item #${AZURE_BOARDS_ID}"
 }
 
 AZURE_BOARDS_TYPE="${AZURE_BOARDS_TYPE:-Feature}"
@@ -63,20 +71,29 @@ TRIGGER="${GITHUB_EVENT}/${GITHUB_ACTION}"
 
 case "$TRIGGER" in
 "issue/opened")
-    if ! check_github_label; then
+    if [ ! -z "$ITEM_LABEL"] && ! check_github_label; then
         echo "Issue ${GITHUB_ISSUE_NUMBER} does not have a label (${ITEM_LABEL}) set; ignoring."
         exit
     fi
 
-    echo "Creating work item..."
-    RESULTS=$(vsts work item create --type "${AZURE_BOARDS_TYPE}" \
-        --title "${AZURE_BOARDS_TITLE}" \
-        --description "${AZURE_BOARDS_DESCRIPTION}" \
-        -f 80="GitHub; Issue ${GITHUB_ISSUE_NUMBER}" \
-        --output json)
-    AZURE_BOARDS_ID=$(echo "${RESULTS}" | jq --raw-output .id)
+    create_work_item
+    ;;
 
-    echo "Created work item #${AZURE_BOARDS_ID}"
+"issue/labeled")
+    if [ -z "$ITEM_LABEL" ]; then
+        exit
+    fi
+
+    if [ ! check_github_label; then
+        echo "Issue ${GITHUB_ISSUE_NUMBER} does not have a label (${ITEM_LABEL}) set; ignoring."
+        exit
+    fi
+
+    echo "Looking for existing work items with tag 'Issue ${GITHUB_ISSUE_NUMBER}'..."
+
+    if [ "${IDS}" = "" ]; then
+        create_work_item
+    fi
     ;;
 
 "issue/reopened"|"issue/closed")
