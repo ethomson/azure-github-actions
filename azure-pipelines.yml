@@ -9,4 +9,6 @@ trigger:
 
 steps:
 - script: |
+    env
+    pwd
     docker run --rm -v '$(Build.SourcesDirectory):/mnt' -t koalaman/shellcheck */entrypoint.sh
