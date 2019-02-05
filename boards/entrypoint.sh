@@ -71,8 +71,10 @@ TRIGGER="${GITHUB_EVENT}/${GITHUB_ACTION}"
 
 case "$TRIGGER" in
 "issue/opened")
-    if [ ! -z "$ITEM_LABEL" ] && ! check_github_label; then
-        echo "Issue ${GITHUB_ISSUE_NUMBER} does not have a label (${ITEM_LABEL}) set; ignoring."
+    # If we're limiting ourselves to GitHub issues that have a particular
+    # label, ignore the 'opened' action; we'll get a subsequent 'labeled'
+    # action.
+    if [ ! -z "$ITEM_LABEL" ]; then
         exit
     fi
 
@@ -84,7 +86,7 @@ case "$TRIGGER" in
         exit
     fi
 
-    if [ ! check_github_label; then
+    if [ ! check_github_label ]; then
         echo "Issue ${GITHUB_ISSUE_NUMBER} does not have a label (${ITEM_LABEL}) set; ignoring."
         exit
     fi
