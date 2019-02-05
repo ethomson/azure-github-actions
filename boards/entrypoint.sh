@@ -69,6 +69,9 @@ AZURE_BOARDS_DESCRIPTION=$(jq --raw-output .issue.body "$GITHUB_EVENT_PATH")
 
 TRIGGER="${GITHUB_EVENT}/${GITHUB_ACTION}"
 
+echo $TRIGGER
+cat $GITHUB_EVENT_PATH
+
 case "$TRIGGER" in
 "issue/opened")
     # If we're limiting ourselves to GitHub issues that have a particular
