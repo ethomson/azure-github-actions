@@ -30,11 +30,13 @@ function check_github_label {
     for EXPECTED in $(sed 's/;/ /g' <<< "$ITEM_LABEL"); do
         for SET in $(jq --raw-output '.issue.labels[].name' "$GITHUB_EVENT_PATH" | xargs); do
             if [ "$EXPECTED" = "$SET" ]; then
+                echo "$EXPECTED == $SET"
                 return 0
             fi
         done
     done
 
+    echo "no $ITEM_LABEL"
     return 1
 }
 
