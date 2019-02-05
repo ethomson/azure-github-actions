@@ -70,6 +70,7 @@ AZURE_BOARDS_DESCRIPTION=$(jq --raw-output .issue.body "$GITHUB_EVENT_PATH")
 TRIGGER="${GITHUB_EVENT}/${GITHUB_ACTION}"
 
 echo $TRIGGER
+echo "labels: ${ITEM_LABEL}"
 cat $GITHUB_EVENT_PATH
 
 case "$TRIGGER" in
